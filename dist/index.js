@@ -15859,7 +15859,7 @@ require("./sourcemap-register.js");
         }
       }
 
-      // Retuns the release type (major, minor, or patch) based on the tags in the PR.
+      // Returns the release type (major, minor, patch or skip) based on the tags in the PR.
       function getReleaseType(pr, config) {
         const labelNames = pr.labels.map((label) => label.name);
         const releaseLabelsPresent = labelNames.filter((name) =>
