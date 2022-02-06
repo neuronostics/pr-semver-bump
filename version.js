@@ -1,22 +1,34 @@
 const github = require('@actions/github')
 const semver = require('semver')
+const childProcess = require('child_process')
+const fs = require('fs')
 
 // Tags the specified version and annotates it with the provided release notes.
 async function createRelease(version, releaseNotes, config) {
     const tag = `${config.v}${version}`
-    const tagCreateResponse = await config.octokit.git.createTag({
-        ...github.context.repo,
-        tag: tag,
-        message: releaseNotes,
-        object: process.env.GITHUB_SHA,
-        type: 'commit',
-    })
 
-    await config.octokit.git.createRef({
-        ...github.context.repo,
-        ref: `refs/tags/${tag}`,
-        sha: tagCreateResponse.data.sha,
-    })
+    if (!config.useSSH) {
+        const tagCreateResponse = await config.octokit.git.createTag({
+            ...github.context.repo,
+            tag: tag,
+            message: releaseNotes,
+            object: process.env.GITHUB_SHA,
+            type: 'commit',
+        })
+
+        await config.octokit.git.createRef({
+            ...github.context.repo,
+            ref: `refs/tags/${tag}`,
+            sha: tagCreateResponse.data.sha,
+        })
+    } else {
+        const releaseNotesFile = './.relase-notes.txt'
+        fs.writeFileSync(releaseNotesFile, releaseNotes)
+        // The git checkout is already on the correct commit, simply
+        // add a tag to add the /refs/tags/...
+        childProcess.execSync(`git tag -F ${releaseNotesFile} ${tag}`)
+        childProcess.execSync('git push --tags')
+    }
 
     return tag
 }
