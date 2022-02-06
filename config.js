@@ -39,6 +39,7 @@ function getConfig() {
             core.getInput('require-release-notes').toLowerCase() === 'true',
         useSSH: core.getInput('use-ssh').toLowerCase() === 'true',
         v: core.getInput('with-v').toLowerCase() === 'true' ? 'v' : '',
+        requireRelease: core.getInput('require-release').toLowerCase() === 'true',
     }
 }
 

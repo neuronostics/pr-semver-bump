@@ -81,9 +81,15 @@ async function bumpAndTagNewVersion(config) {
         pr = await fetchPR(num, config)
     }
     core.info(`Processing version bump for PR request #${pr.number}`)
-    const releaseType = getReleaseType(pr, config)
-    const releaseNotes = getReleaseNotes(pr, config)
+
     const currentVersion = await getCurrentVersion(config)
+    const releaseType = getReleaseType(pr, config)
+    if (!releaseType) {
+        core.info(`No release type found for PR request #${pr.number}`)
+        core.setOutput('old-version', `${config.v}${currentVersion}`)
+        return
+    }
+    const releaseNotes = getReleaseNotes(pr, config)
 
     const newVersion = semver.inc(currentVersion, releaseType)
     const newTag = await createRelease(newVersion, releaseNotes, config)
