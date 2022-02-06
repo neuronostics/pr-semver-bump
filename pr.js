@@ -34,7 +34,7 @@ async function searchPRByCommit(commitSHA, config) {
         const pr = data.data.items[0]
         return pr
     } catch (fetchError) {
-        throw new Error(`Failed to find PR by commit SHA ${commitSHA}: ${fetchError.message}`)
+        return null
     }
 }
 
