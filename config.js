@@ -1,52 +1,55 @@
-const core = require('@actions/core')
-const github = require('@actions/github')
+const core = require("@actions/core");
+const github = require("@actions/github");
 
 // Gets all the required inputs and validates them before proceeding.
 function getConfig() {
-    const mode = core.getInput('mode', { required: true }).toLowerCase()
-    if (mode !== 'validate' && mode !== 'bump') {
-        throw new Error("mode must be either 'validate' or 'bump'")
-    }
+  const mode = core.getInput("mode", { required: true }).toLowerCase();
+  if (mode !== "validate" && mode !== "bump") {
+    throw new Error("mode must be either 'validate' or 'bump'");
+  }
 
-    const token = core.getInput('repo-token', { required: true })
-    core.setSecret(token)
+  const token = core.getInput("repo-token", { required: true });
+  core.setSecret(token);
 
-    const releaseNotesPrefix = core.getInput('release-notes-prefix')
-    const releaseNotesSuffix = core.getInput('release-notes-suffix')
+  const releaseNotesPrefix = core.getInput("release-notes-prefix");
+  const releaseNotesSuffix = core.getInput("release-notes-suffix");
 
-    let releaseNotesPrefixPattern
-    if (releaseNotesPrefix !== undefined && releaseNotesPrefix !== '') {
-        releaseNotesPrefixPattern = new RegExp(releaseNotesPrefix)
-    }
+  let releaseNotesPrefixPattern;
+  if (releaseNotesPrefix !== undefined && releaseNotesPrefix !== "") {
+    releaseNotesPrefixPattern = new RegExp(releaseNotesPrefix);
+  }
 
-    let releaseNotesSuffixPattern
-    if (releaseNotesSuffix !== undefined && releaseNotesSuffix !== '') {
-        releaseNotesSuffixPattern = new RegExp(releaseNotesSuffix)
-    }
+  let releaseNotesSuffixPattern;
+  if (releaseNotesSuffix !== undefined && releaseNotesSuffix !== "") {
+    releaseNotesSuffixPattern = new RegExp(releaseNotesSuffix);
+  }
 
-    const releaseLabels = {}
-    releaseLabels[core.getInput('major-label') || 'major release'] = 'major'
-    releaseLabels[core.getInput('minor-label') || 'minor release'] = 'minor'
-    releaseLabels[core.getInput('patch-label') || 'patch release'] = 'patch'
+  const releaseLabels = {};
+  releaseLabels[core.getInput("major-label") || "major release"] = "major";
+  releaseLabels[core.getInput("minor-label") || "minor release"] = "minor";
+  releaseLabels[core.getInput("patch-label") || "patch release"] = "patch";
 
-    const noopLabels = { }
-    const configuredNoopLabels = core.getMultilineInput('noop-labels', { trimWhitespace: true })
-    for (let i = 0; i < configuredNoopLabels.length; i++) noopLabels[configuredNoopLabels[i]] = 'skip'
+  const noopLabels = {};
+  const configuredNoopLabels = core.getMultilineInput("noop-labels", {
+    trimWhitespace: true,
+  });
+  for (let i = 0; i < configuredNoopLabels.length; i++)
+    noopLabels[configuredNoopLabels[i]] = "skip";
 
-    return {
-        mode: mode,
-        octokit: github.getOctokit(token),
-        releaseLabels: releaseLabels,
-        noopLabels: noopLabels,
-        releaseNotesPrefixPattern: releaseNotesPrefixPattern,
-        releaseNotesSuffixPattern: releaseNotesSuffixPattern,
-        requireReleaseNotes:
-      core.getInput('require-release-notes').toLowerCase() === 'true',
-        useSSH: core.getInput('use-ssh').toLowerCase() === 'true',
-        baseBranch: core.getInput('base-branch').toLowerCase() === 'true',
-        v: core.getInput('with-v').toLowerCase() === 'true' ? 'v' : '',
-        requireRelease: core.getInput('require-release').toLowerCase() === 'true',
-    }
+  return {
+    mode: mode,
+    octokit: github.getOctokit(token),
+    releaseLabels: releaseLabels,
+    noopLabels: noopLabels,
+    releaseNotesPrefixPattern: releaseNotesPrefixPattern,
+    releaseNotesSuffixPattern: releaseNotesSuffixPattern,
+    requireReleaseNotes:
+      core.getInput("require-release-notes").toLowerCase() === "true",
+    useSSH: core.getInput("use-ssh").toLowerCase() === "true",
+    baseBranch: core.getInput("base-branch").toLowerCase() === "true",
+    v: core.getInput("with-v").toLowerCase() === "true" ? "v" : "",
+    requireRelease: core.getInput("require-release").toLowerCase() === "true",
+  };
 }
 
-exports.getConfig = getConfig
+exports.getConfig = getConfig;

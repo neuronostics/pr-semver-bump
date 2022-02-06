@@ -4,37 +4,38 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /***/ 5532:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-const core = __nccwpck_require__(2186)
-const github = __nccwpck_require__(5438)
+const core = __nccwpck_require__(2186);
+const github = __nccwpck_require__(5438);
 
 // Gets all the required inputs and validates them before proceeding.
 function getConfig() {
-    const mode = core.getInput('mode', { required: true }).toLowerCase()
-    if (mode !== 'validate' && mode !== 'bump') {
-        throw new Error("mode must be either 'validate' or 'bump'")
-    }
+  const mode = core.getInput("mode", { required: true }).toLowerCase();
+  if (mode !== "validate" && mode !== "bump") {
+    throw new Error("mode must be either 'validate' or 'bump'");
+  }
 
-    const token = core.getInput('repo-token', { required: true })
-    core.setSecret(token)
+  const token = core.getInput("repo-token", { required: true });
+  core.setSecret(token);
 
-    const releaseNotesPrefix = core.getInput('release-notes-prefix')
-    const releaseNotesSuffix = core.getInput('release-notes-suffix')
+  const releaseNotesPrefix = core.getInput("release-notes-prefix");
+  const releaseNotesSuffix = core.getInput("release-notes-suffix");
 
-    let releaseNotesPrefixPattern
-    if (releaseNotesPrefix !== undefined && releaseNotesPrefix !== '') {
-        releaseNotesPrefixPattern = new RegExp(releaseNotesPrefix)
-    }
+  let releaseNotesPrefixPattern;
+  if (releaseNotesPrefix !== undefined && releaseNotesPrefix !== "") {
+    releaseNotesPrefixPattern = new RegExp(releaseNotesPrefix);
+  }
 
-    let releaseNotesSuffixPattern
-    if (releaseNotesSuffix !== undefined && releaseNotesSuffix !== '') {
-        releaseNotesSuffixPattern = new RegExp(releaseNotesSuffix)
-    }
+  let releaseNotesSuffixPattern;
+  if (releaseNotesSuffix !== undefined && releaseNotesSuffix !== "") {
+    releaseNotesSuffixPattern = new RegExp(releaseNotesSuffix);
+  }
 
-    const releaseLabels = {}
-    releaseLabels[core.getInput('major-label') || 'major release'] = 'major'
-    releaseLabels[core.getInput('minor-label') || 'minor release'] = 'minor'
-    releaseLabels[core.getInput('patch-label') || 'patch release'] = 'patch'
+  const releaseLabels = {};
+  releaseLabels[core.getInput("major-label") || "major release"] = "major";
+  releaseLabels[core.getInput("minor-label") || "minor release"] = "minor";
+  releaseLabels[core.getInput("patch-label") || "patch release"] = "patch";
 
+<<<<<<< HEAD
     return {
         mode: mode,
         octokit: github.getOctokit(token),
@@ -48,9 +49,31 @@ function getConfig() {
         v: core.getInput('with-v').toLowerCase() === 'true' ? 'v' : '',
         requireRelease: core.getInput('require-release').toLowerCase() === 'true',
     }
+=======
+  const noopLabels = {};
+  const configuredNoopLabels = core.getMultilineInput("noop-labels", {
+    trimWhitespace: true,
+  });
+  for (let i = 0; i < configuredNoopLabels.length; i++)
+    noopLabels[configuredNoopLabels[i]] = "skip";
+
+  return {
+    mode: mode,
+    octokit: github.getOctokit(token),
+    releaseLabels: releaseLabels,
+    noopLabels: noopLabels,
+    releaseNotesPrefixPattern: releaseNotesPrefixPattern,
+    releaseNotesSuffixPattern: releaseNotesSuffixPattern,
+    requireReleaseNotes:
+      core.getInput("require-release-notes").toLowerCase() === "true",
+    baseBranch: core.getInput("base-branch").toLowerCase() === "true",
+    useSSH: core.getInput("use-ssh").toLowerCase() === "true",
+    v: core.getInput("with-v").toLowerCase() === "true" ? "v" : "",
+  };
+>>>>>>> 5da088a (Try using bare git commands)
 }
 
-exports.getConfig = getConfig
+exports.getConfig = getConfig;
 
 
 /***/ }),
@@ -13058,122 +13081,152 @@ exports.getReleaseNotes = getReleaseNotes
 /***/ 3195:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
+<<<<<<< HEAD
 const core = __nccwpck_require__(2186)
 const github = __nccwpck_require__(5438)
 const semver = __nccwpck_require__(1383)
 const childProcess = __nccwpck_require__(2081)
 const fs = __nccwpck_require__(7147)
+=======
+const core = __nccwpck_require__(2186);
+const github = __nccwpck_require__(5438);
+const semver = __nccwpck_require__(1383);
+const childProcess = __nccwpck_require__(2081);
+const fs = __nccwpck_require__(7147);
+>>>>>>> 5da088a (Try using bare git commands)
 
-const DEFAULT_VERSION = '0.0.0'
+const DEFAULT_VERSION = "0.0.0";
 
 async function getCommitsOnBranch(branch, config) {
-    const commits = new Set()
-    // eslint-disable-next-line no-restricted-syntax
-    for await (const response of config.octokit.paginate.iterator(
-        config.octokit.rest.repos.listCommits,
-        {
-            ...github.context.repo,
-            sha: branch,
-        },
-    )) {
-        response.data.forEach((commit) => {
-            commits.add(commit.sha)
-        })
+  const commits = new Set();
+  // eslint-disable-next-line no-restricted-syntax
+  for await (const response of config.octokit.paginate.iterator(
+    config.octokit.rest.repos.listCommits,
+    {
+      ...github.context.repo,
+      sha: branch,
     }
-    return commits
+  )) {
+    response.data.forEach((commit) => {
+      commits.add(commit.sha);
+    });
+  }
+  return commits;
 }
 
-async function getLatestVersionInCommits(commits, sortedVersions, objectsByVersion, config) {
-    for (let i = 0; i < sortedVersions.length; i++) {
-        const refObj = objectsByVersion[sortedVersions[i]]
+async function getLatestVersionInCommits(
+  commits,
+  sortedVersions,
+  objectsByVersion,
+  config
+) {
+  for (let i = 0; i < sortedVersions.length; i++) {
+    const refObj = objectsByVersion[sortedVersions[i]];
 
-        if (refObj.type === 'commit' && commits.has(refObj.sha)) {
-            return `${sortedVersions[i]}`
-        }
-
-        if (refObj.type === 'tag') {
-            // eslint-disable-next-line no-await-in-loop
-            const tag = await config.octokit.rest.git.getTag({
-                ...github.context.repo,
-                tag_sha: refObj.sha,
-            })
-
-            if (commits.has(tag.data.object.sha)) {
-                return `${sortedVersions[i]}`
-            }
-        }
+    if (refObj.type === "commit" && commits.has(refObj.sha)) {
+      return `${sortedVersions[i]}`;
     }
 
-    return DEFAULT_VERSION
+    if (refObj.type === "tag") {
+      // eslint-disable-next-line no-await-in-loop
+      const tag = await config.octokit.rest.git.getTag({
+        ...github.context.repo,
+        tag_sha: refObj.sha,
+      });
+
+      if (commits.has(tag.data.object.sha)) {
+        return `${sortedVersions[i]}`;
+      }
+    }
+  }
+
+  return DEFAULT_VERSION;
 }
 
 // Tags the specified version and annotates it with the provided release notes.
 async function createRelease(version, releaseNotes, config) {
-    const tag = `${config.v}${version}`
+  const tag = `${config.v}${version}`;
 
-    if (!config.useSSH) {
-        const tagCreateResponse = await config.octokit.git.createTag({
-            ...github.context.repo,
-            tag: tag,
-            message: releaseNotes,
-            object: process.env.GITHUB_SHA,
-            type: 'commit',
-        })
+  if (!config.useSSH) {
+    const tagCreateResponse = await config.octokit.rest.git.createTag({
+      ...github.context.repo,
+      tag: tag,
+      message: releaseNotes,
+      object: process.env.GITHUB_SHA,
+      type: "commit",
+    });
 
-        await config.octokit.git.createRef({
-            ...github.context.repo,
-            ref: `refs/tags/${tag}`,
-            sha: tagCreateResponse.data.sha,
-        })
-    } else {
-        const releaseNotesFile = './.relase-notes.txt'
-        fs.writeFileSync(releaseNotesFile, releaseNotes)
-        // The git checkout is already on the correct commit, simply
-        // add a tag to add the /refs/tags/...
-        childProcess.execSync(`git tag -F ${releaseNotesFile} ${tag}`)
-        childProcess.execSync('git push --tags')
-    }
+    await config.octokit.rest.git.createRef({
+      ...github.context.repo,
+      ref: `refs/tags/${tag}`,
+      sha: tagCreateResponse.data.sha,
+    });
+  } else {
+    const releaseNotesFile = "./.release-notes.txt";
+    fs.writeFileSync(releaseNotesFile, releaseNotes);
+    // The git checkout is already on the correct commit, simply
+    // add a tag to add the /refs/tags/...
+    childProcess.execSync(`git tag -F ${releaseNotesFile} ${tag}`);
+    childProcess.execSync("git push --tags");
+  }
 
-    return tag
+  return tag;
 }
 
 // Returns the most recent tagged version in git.
 async function getCurrentVersion(config) {
+<<<<<<< HEAD
     const data = await config.octokit.git.listMatchingRefs({
         ...github.context.repo,
         ref: 'tags/',
     })
+=======
+  const data = await config.octokit.rest.git.listMatchingRefs({
+    ...github.context.repo,
+    ref: "tags/",
+  });
+>>>>>>> 5da088a (Try using bare git commands)
 
-    const objectsByVersion = new Map()
-    const versions = []
+  const objectsByVersion = new Map();
+  const versions = [];
 
-    data.data.forEach((ref) => {
-        const version = semver.parse(ref.ref.replace(/^refs\/tags\//g, ''), { loose: true })
+  data.data.forEach((ref) => {
+    const version = semver.parse(ref.ref.replace(/^refs\/tags\//g, ""), {
+      loose: true,
+    });
 
-        if (version !== null) {
-            objectsByVersion[version] = ref.object
-            versions.push(version)
-        }
-    })
-
-    versions.sort(semver.rcompare)
-
-    if (config.baseBranch) {
-        const branch = process.env.GITHUB_BASE_REF || (process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/', ''))
-        core.info(`Only considering tags on branch ${branch}`)
-        const commits = await getCommitsOnBranch(branch, config)
-        return getLatestVersionInCommits(commits, versions, objectsByVersion, config)
+    if (version !== null) {
+      objectsByVersion[version] = ref.object;
+      versions.push(version);
     }
+  });
 
-    if (versions[0] !== undefined) {
-        return `${versions[0]}`
-    }
+  versions.sort(semver.rcompare);
 
-    return DEFAULT_VERSION
+  if (config.baseBranch) {
+    const branch =
+      process.env.GITHUB_BASE_REF ||
+      (process.env.GITHUB_REF &&
+        process.env.GITHUB_REF.replace("refs/heads/", ""));
+    core.info(`Only considering tags on branch ${branch}`);
+    const commits = await getCommitsOnBranch(branch, config);
+    return getLatestVersionInCommits(
+      commits,
+      versions,
+      objectsByVersion,
+      config
+    );
+  }
+
+  if (versions[0] !== undefined) {
+    return `${versions[0]}`;
+  }
+
+  return DEFAULT_VERSION;
 }
 
-exports.createRelease = createRelease
-exports.getCurrentVersion = getCurrentVersion
+exports.createRelease = createRelease;
+exports.getCurrentVersion = getCurrentVersion;
 
 
 /***/ }),
