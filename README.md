@@ -1,3 +1,38 @@
+# SQ Fork:
+### Adds `use-ssh` option
+
+Setting the option to `true` uses plain git commands and pushes the tag via ssh. this is useful when combined with using a deploy key with write access since it allows the triggering of a workflow which is not allowed for commits/tags created using the `GITHUB_TOKEN`. The alternative to this is to use a personal access token, but those are scoped to a user rather than a repo, causing security concerns.
+
+The following snippet demonstrates its use:
+
+```yaml
+  tag-release:
+    needs: [lint, test]
+    if: github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # See: https://medium.com/prompt/trigger-another-github-workflow-without-using-a-personal-access-token-f594c21373ef
+          ssh-key: "${{ secrets.COMMIT_KEY }}"
+
+      - name: Set GitHub Actions as commit author
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - uses: Spatial-Quotient/pr-semver-bump@master
+        name: Bump and Tag Version
+        with:
+          mode: bump
+          repo-token: ${{ secrets.GITHUB_TOKEN }}  
+          use-ssh: true
+```
+
+### Adds `require-release` option
+Defaults to `true` to replicate existing functionalty, but when set to `false`, will not cause a CI failure if no tag is present. In some workflows not every commit requires a release.
+
 # pr-semver-bump
 
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jefflinse/pr-semver-bump/CI)
