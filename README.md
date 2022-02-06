@@ -88,6 +88,7 @@ Inputs can be used to customize the behavior of the action in both modes.
 | `release-notes-suffix` | If defined, constrains release notes to any text appearing before a line matching this pattern in the pull request body. By default, release notes end at the end of the pull request description. |
 | `use-ssh` | If set to `true`, use git commands rather than the github api. Useful if you want to use a deploy key to push the tag in order to trigger further workflows (See https://github.com/pr-mpt/examples-workflow-trigger) |
 | `with-v` | If true, newly tagged versions will be prefixed with 'v', e.g. 'v1.2.3'. |
+| `require-release` | If true (default true), when `mode=bump` the action will fail if a release tag is not found on the merged pull request. |
 
 ### Using Custom Label Names
 

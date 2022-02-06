@@ -39,6 +39,10 @@ inputs:
     description: Set to 'true' to prefix versions with 'v'
     required: false
     default: 'false'
+  require-release:
+    description: Set to false to disable requiring a release in a merged PR
+    required: false
+    default: true
 outputs:
   old-version:
     description: The version tag prior to bumping

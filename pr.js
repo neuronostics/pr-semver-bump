@@ -59,8 +59,11 @@ function getReleaseType(pr, config) {
         (name) => Object.keys(config.releaseLabels).includes(name),
     )
     if (releaseLabelsPresent.length === 0) {
-        throw new Error('no release label specified on PR')
-    } else if (releaseLabelsPresent.length > 1) {
+        if (config.requireRelease) {
+            throw new Error('no release label specified on PR')
+        }
+        return null
+    } if (releaseLabelsPresent.length > 1) {
         throw new Error(`too many release labels specified on PR: ${releaseLabelsPresent}`)
     }
 

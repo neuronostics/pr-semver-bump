@@ -4,7 +4,7 @@
   "description": "A GitHub Action to bump and tag a new semantic version when a pull request is merged.",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint . --fix",
     "prepare": "ncc build index.js -o dist --source-map",
     "test": "jest --coverage",
     "all": "npm run lint && npm run prepare && npm run test"

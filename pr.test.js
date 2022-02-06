@@ -127,11 +127,34 @@ test('throws if no valid release label is present', () => {
             'mock-minor-label': 'minor',
             'mock-patch-label': 'patch',
         },
+        requireRelease: true,
     }
 
     expect(() => {
         getReleaseType(mockPR, config)
     }).toThrow('no release label specified on PR')
+})
+
+test('does not throw when no release label is required', () => {
+    const mockPR = {
+        labels: [
+            { name: 'some-label' },
+            { name: 'not-release-related' },
+            { name: 'another one' },
+        ],
+    }
+    const config = {
+        releaseLabels: {
+            'mock-major-label': 'major',
+            'mock-minor-label': 'minor',
+            'mock-patch-label': 'patch',
+        },
+        requireRelease: false,
+    }
+
+    expect(() => {
+        getReleaseType(mockPR, config)
+    }).not.toThrow('no release label specified on PR')
 })
 
 test('throws if multiple valid release labels are present', () => {
