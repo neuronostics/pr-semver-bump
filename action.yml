@@ -31,6 +31,10 @@ inputs:
   repo-token:
     description: The repository's GITHUB_TOKEN, used to obtain PR data
     required: true
+  use-ssh:
+    description: Set to true to use SSH to push the tag, rather than the github api
+    required: false
+    default: false
   with-v:
     description: Set to 'true' to prefix versions with 'v'
     required: false

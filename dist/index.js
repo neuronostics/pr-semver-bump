@@ -487,7 +487,9 @@ function getConfig() {
         releaseLabels: releaseLabels,
         releaseNotesPrefixPattern: releaseNotesPrefixPattern,
         releaseNotesSuffixPattern: releaseNotesSuffixPattern,
-        requireReleaseNotes: core.getInput('require-release-notes').toLowerCase() === 'true',
+        requireReleaseNotes:
+            core.getInput('require-release-notes').toLowerCase() === 'true',
+        useSSH: core.getInput('use-ssh').toLowerCase() === 'true',
         v: core.getInput('with-v').toLowerCase() === 'true' ? 'v' : '',
     }
 }
@@ -1290,6 +1292,13 @@ function getApiBaseUrl() {
 }
 exports.getApiBaseUrl = getApiBaseUrl;
 //# sourceMappingURL=utils.js.map
+
+/***/ }),
+
+/***/ 129:
+/***/ (function(module) {
+
+module.exports = require("child_process");
 
 /***/ }),
 
@@ -9125,23 +9134,35 @@ module.exports = inc
 
 const github = __webpack_require__(469)
 const semver = __webpack_require__(876)
+const childProcess = __webpack_require__(129)
+const fs = __webpack_require__(747)
 
 // Tags the specified version and annotates it with the provided release notes.
 async function createRelease(version, releaseNotes, config) {
     const tag = `${config.v}${version}`
-    const tagCreateResponse = await config.octokit.git.createTag({
-        ...github.context.repo,
-        tag: tag,
-        message: releaseNotes,
-        object: process.env.GITHUB_SHA,
-        type: 'commit',
-    })
 
-    await config.octokit.git.createRef({
-        ...github.context.repo,
-        ref: `refs/tags/${tag}`,
-        sha: tagCreateResponse.data.sha,
-    })
+    if (!config.useSSH) {
+        const tagCreateResponse = await config.octokit.git.createTag({
+            ...github.context.repo,
+            tag: tag,
+            message: releaseNotes,
+            object: process.env.GITHUB_SHA,
+            type: 'commit',
+        })
+
+        await config.octokit.git.createRef({
+            ...github.context.repo,
+            ref: `refs/tags/${tag}`,
+            sha: tagCreateResponse.data.sha,
+        })
+    } else {
+        const releaseNotesFile = './.relase-notes.txt'
+        fs.writeFileSync(releaseNotesFile, releaseNotes)
+        // The git checkout is already on the correct commit, simply
+        // add a tag to add the /refs/tags/...
+        childProcess.execSync(`git tag -F ${releaseNotesFile} ${tag}`)
+        childProcess.execSync('git push --tags')
+    }
 
     return tag
 }
