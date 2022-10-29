@@ -124,6 +124,7 @@ Inputs can be used to customize the behavior of the action in both modes.
 | `use-ssh` | If set to `true`, use git commands rather than the github api. Useful if you want to use a deploy key to push the tag in order to trigger further workflows (See https://github.com/pr-mpt/examples-workflow-trigger) |
 | `with-v` | If true, newly tagged versions will be prefixed with 'v', e.g. 'v1.2.3'. |
 | `require-release` | If true (default true), when `mode=bump` the action will fail if a release tag is not found on the merged pull request. |
+| `base-branch` | Whether or not to only consider version tags on the base branch in the pull request. |
 
 ### Using Custom Label Names
 
@@ -244,6 +245,7 @@ jobs:
           release-notes-prefix: ''
           release-notes-suffix: ''
           with-v: false
+          base-branch: false
 ```
 
 Create a CI workflow to run whenever a pull request is merged. All optional inputs are explicitly set to their default values in the configuration below.
@@ -274,6 +276,7 @@ jobs:
           release-notes-prefix: ''
           release-notes-suffix: ''
           with-v: false
+          base-branch: false
 ```
 
 ## Contributing

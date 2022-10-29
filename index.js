@@ -109,6 +109,7 @@ async function run() {
             await bumpAndTagNewVersion(config)
         }
     } catch (e) {
+        core.info(e.stack)
         core.setFailed(`unexpected error: ${e.message}`)
     }
 }
