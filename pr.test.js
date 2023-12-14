@@ -598,7 +598,7 @@ test('throws if both a valid release label and a noop label are present', () => 
     expect(() => {
         getReleaseType(mockPR, config)
     }).toThrow(
-        'too manu labels specified, both release labels and noop labels specified',
+        'too many labels specified, both release labels and noop labels specified',
     )
 })
 

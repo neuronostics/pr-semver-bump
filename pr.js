@@ -66,7 +66,10 @@ async function fetchPR(num, config) {
 // Returns the release type (major, minor, patch or skip) based on the tags in the PR.
 function getReleaseType(pr, config) {
     const labelNames = pr.labels.map((label) => label.name)
+    // disable max len as eslint doesn't like the formatting
+    // eslint-disable-next-line max-len
     const releaseLabelsPresent = labelNames.filter((name) => Object.keys(config.releaseLabels).includes(name))
+    // eslint-disable-next-line max-len
     const noopLabelsPresent = labelNames.filter((name) => Object.keys(config.noopLabels).includes(name))
     if (releaseLabelsPresent.length === 0 && noopLabelsPresent.length === 0) {
         throw new Error('no release label specified on PR')
@@ -79,7 +82,8 @@ function getReleaseType(pr, config) {
     && noopLabelsPresent.length >= 1
     ) {
         throw new Error(
-            `too manu labels specified, both release labels and noop labels specified: (${releaseLabelsPresent})  (${noopLabelsPresent}) on PR`,
+            `too many labels specified, both release labels and noop labels specified:
+      (${releaseLabelsPresent})  (${noopLabelsPresent}) on PR`,
         )
     }
 
