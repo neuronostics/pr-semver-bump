@@ -24,7 +24,7 @@ async function searchPRByCommit(commitSHA, config) {
     // Rebase merge will not have the information in the commit message
     try {
         const q = `type:pull-request is:merged ${commitSHA}`
-        const data = await config.octokit.search.issuesAndPullRequests({ q })
+        const data = await config.octokit.rest.search.issuesAndPullRequests({ q })
 
         if (data.data.total_count < 1) {
             throw new Error('No results found querying for the PR')
@@ -34,40 +34,55 @@ async function searchPRByCommit(commitSHA, config) {
         const pr = data.data.items[0]
         return pr
     } catch (fetchError) {
-        return null
+        throw new Error(
+            `Failed to find PR by commit SHA ${commitSHA}: ${fetchError.message}`,
+        )
     }
 }
 
 // Fetches the details of a pull request.
 async function fetchPR(num, config) {
     try {
-        const data = await config.octokit.pulls.get({
+        const data = await config.octokit.rest.pulls.get({
             ...github.context.repo,
             pull_number: num,
         })
 
         return data.data
     } catch (fetchError) {
-        throw new Error(`failed to fetch data for PR #${num}: ${fetchError.message}`)
+        throw new Error(
+            `failed to fetch data for PR #${num}: ${fetchError.message}`,
+        )
     }
 }
 
-// Retuns the release type (major, minor, or patch) based on the tags in the PR.
+// Returns the release type (major, minor, patch or skip) based on the tags in the PR.
 function getReleaseType(pr, config) {
     const labelNames = pr.labels.map((label) => label.name)
-    const releaseLabelsPresent = labelNames.filter(
-        (name) => Object.keys(config.releaseLabels).includes(name),
-    )
-    if (releaseLabelsPresent.length === 0) {
-        if (config.requireRelease) {
-            throw new Error('no release label specified on PR')
-        }
-        return null
-    } if (releaseLabelsPresent.length > 1) {
-        throw new Error(`too many release labels specified on PR: ${releaseLabelsPresent}`)
+    // disable max len as eslint doesn't like the formatting
+    // eslint-disable-next-line max-len
+    const releaseLabelsPresent = labelNames.filter((name) => Object.keys(config.releaseLabels).includes(name))
+    // eslint-disable-next-line max-len
+    const noopLabelsPresent = labelNames.filter((name) => Object.keys(config.noopLabels).includes(name))
+    if (releaseLabelsPresent.length === 0 && noopLabelsPresent.length === 0) {
+        throw new Error('no release label specified on PR')
+    } else if (releaseLabelsPresent.length > 1) {
+        throw new Error(
+            `too many release labels specified on PR: ${releaseLabelsPresent}`,
+        )
+    } else if (
+        releaseLabelsPresent.length >= 1
+    && noopLabelsPresent.length >= 1
+    ) {
+        throw new Error(
+            `too many labels specified, both release labels and noop labels specified:
+      (${releaseLabelsPresent})  (${noopLabelsPresent}) on PR`,
+        )
     }
 
-    return config.releaseLabels[releaseLabelsPresent[0]]
+    return releaseLabelsPresent.length === 1
+        ? config.releaseLabels[releaseLabelsPresent[0]]
+        : config.noopLabels[noopLabelsPresent[0]]
 }
 
 // Extracts the release notes from the PR body.
@@ -78,19 +93,35 @@ function getReleaseNotes(pr, config) {
         const lines = pr.body.split(/\r?\n/)
         let withinNotes = config.releaseNotesPrefixPattern === undefined
         let firstLine = 0
+
+        // Default to the entire PR body
         let lastLine = lines.length
+
+        // If a prefix or suffix has been defined default to none of the PR body
+        if (
+            config.releaseNotesPrefixPattern !== undefined
+      || config.releaseNotesSuffixPattern !== undefined
+        ) {
+            lastLine = 0
+        }
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i]
 
             if (withinNotes) {
-                if (config.releaseNotesSuffixPattern !== undefined
-                    && config.releaseNotesSuffixPattern.test(line)) {
+                if (
+                    config.releaseNotesSuffixPattern !== undefined
+          && config.releaseNotesSuffixPattern.test(line)
+                ) {
                     lastLine = i
                     break
                 }
-            } else if (config.releaseNotesPrefixPattern !== undefined
-                && config.releaseNotesPrefixPattern.test(line)) {
+            } else if (
+                config.releaseNotesPrefixPattern !== undefined
+        && config.releaseNotesPrefixPattern.test(line)
+            ) {
+                // Now that we've seen the prefix, set the lastLine to the end of the message
+                lastLine = lines.length
                 firstLine = i + 1
                 withinNotes = true
             }

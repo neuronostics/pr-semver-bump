@@ -13,18 +13,26 @@ const { createRelease, getCurrentVersion } = require('./version')
 
 // Returns true if the current context looks like an active PR.
 function isActivePR() {
-    return github.context.eventName === 'pull_request' && github.context.payload.pull_request !== undefined
+    return (
+        github.context.eventName === 'pull_request'
+    && github.context.payload.pull_request !== undefined
+    )
 }
 
 // Returns true if the current context looks like a merge commit.
 function isMergeCommit() {
-    return github.context.eventName === 'push' && github.context.payload.head_commit !== undefined
+    return (
+        github.context.eventName === 'push'
+    && github.context.payload.head_commit !== undefined
+    )
 }
 
 // Ensures that the currently active PR contains the required release metadata.
 async function validateActivePR(config) {
     if (!isActivePR()) {
-        core.warning("in 'validate' mode, but this doesn't look like an active PR event (is your workflow misconfigured?)")
+        core.warning(
+            "in 'validate' mode, but this doesn't look like an active PR event (is your workflow misconfigured?)",
+        )
         return
     }
 
@@ -61,43 +69,48 @@ async function validateActivePR(config) {
 // Increments the version according to the release type and tags a new version with release notes.
 async function bumpAndTagNewVersion(config) {
     if (!isMergeCommit()) {
-        core.warning("in 'bump' mode, but this doesn't look like a PR merge commit event (is your workflow misconfigured?)")
+        core.warning(
+            "in 'bump' mode, but this doesn't look like a PR merge commit event (is your workflow misconfigured?)",
+        )
         return
     }
 
     const num = extractPRNumber(github.context.payload.head_commit.message)
     let pr
     if (num == null) {
-        core.info('Unable to determine PR from commit msg, searching for PR by SHA')
+        core.info(
+            'Unable to determine PR from commit msg, searching for PR by SHA',
+        )
         // Try to search the commit sha for the PR number
         pr = await searchPRByCommit(process.env.GITHUB_SHA, config)
         if (pr == null) {
             // Don't want to fail the job if some other commit comes in, but let's warn about it.
             // Might be a good point for configuration in the future.
-            core.warning("head commit doesn't look like a PR merge, skipping version bumping and tagging")
+            core.warning(
+                "head commit doesn't look like a PR merge, skipping version bumping and tagging",
+            )
             return
         }
     } else {
         pr = await fetchPR(num, config)
     }
     core.info(`Processing version bump for PR request #${pr.number}`)
-
-    const currentVersion = await getCurrentVersion(config)
     const releaseType = getReleaseType(pr, config)
-    if (!releaseType) {
-        core.info(`No release type found for PR request #${pr.number}`)
-        core.setOutput('old-version', `${config.v}${currentVersion}`)
-        return
+    // If the release is skipped, we do not create a new tag.
+    const currentVersion = await getCurrentVersion(config)
+    if (releaseType !== 'skip') {
+        const releaseNotes = getReleaseNotes(pr, config)
+        const newVersion = semver.inc(currentVersion, releaseType)
+        const newTag = await createRelease(newVersion, releaseNotes, config)
+        core.info(
+            `Created release tag ${newTag} with the following release notes:\n${releaseNotes}\n`,
+        )
+
+        core.setOutput('version', newTag)
+        core.setOutput('release-notes', releaseNotes)
     }
-    const releaseNotes = getReleaseNotes(pr, config)
-
-    const newVersion = semver.inc(currentVersion, releaseType)
-    const newTag = await createRelease(newVersion, releaseNotes, config)
-    core.info(`Created release tag ${newTag} with the following release notes:\n${releaseNotes}\n`)
-
     core.setOutput('old-version', `${config.v}${currentVersion}`)
-    core.setOutput('version', newTag)
-    core.setOutput('release-notes', releaseNotes)
+    core.setOutput('skipped', releaseType === 'skip')
 }
 
 async function run() {
@@ -109,6 +122,7 @@ async function run() {
             await bumpAndTagNewVersion(config)
         }
     } catch (e) {
+        core.info(e.stack)
         core.setFailed(`unexpected error: ${e.message}`)
     }
 }

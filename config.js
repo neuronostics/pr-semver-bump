@@ -29,17 +29,24 @@ function getConfig() {
     releaseLabels[core.getInput('minor-label') || 'minor release'] = 'minor'
     releaseLabels[core.getInput('patch-label') || 'patch release'] = 'patch'
 
+    const noopLabels = {}
+    const configuredNoopLabels = core.getMultilineInput('noop-labels', {
+        trimWhitespace: true,
+    })
+    for (let i = 0; i < configuredNoopLabels.length; i++) noopLabels[configuredNoopLabels[i]] = 'skip'
+
     return {
         mode: mode,
         octokit: github.getOctokit(token),
         releaseLabels: releaseLabels,
+        noopLabels: noopLabels,
         releaseNotesPrefixPattern: releaseNotesPrefixPattern,
         releaseNotesSuffixPattern: releaseNotesSuffixPattern,
         requireReleaseNotes:
-            core.getInput('require-release-notes').toLowerCase() === 'true',
+      core.getInput('require-release-notes').toLowerCase() === 'true',
+        baseBranch: core.getInput('base-branch').toLowerCase() === 'true',
         useSSH: core.getInput('use-ssh').toLowerCase() === 'true',
         v: core.getInput('with-v').toLowerCase() === 'true' ? 'v' : '',
-        requireRelease: core.getInput('require-release').toLowerCase() === 'true',
     }
 }
 

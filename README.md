@@ -35,10 +35,11 @@ Defaults to `true` to replicate existing functionalty, but when set to `false`, 
 
 # pr-semver-bump
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jefflinse/pr-semver-bump/CI)
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/jefflinse/pr-semver-bump?sort=semver)
-![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/jefflinse/pr-semver-bump)
-![GitHub](https://img.shields.io/github/license/jefflinse/pr-semver-bump)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/jefflinse/pr-semver-bump/master-ci.yml?branch=master)](https://github.com/jefflinse/pr-semver-bump/actions/workflows/master-ci.yml?query=branch%3Amaster)
+[![CodeQL](https://github.com/jefflinse/pr-semver-bump/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)](https://github.com/jefflinse/pr-semver-bump/actions/workflows/codeql-analysis.yml?query=branch%3Amaster)
+[![Newest Release (semver)](https://img.shields.io/github/v/release/jefflinse/pr-semver-bump?sort=semver)](https://github.com/jefflinse/pr-semver-bump/releases)
+[![Newest Tag (semver)](https://img.shields.io/github/v/tag/jefflinse/pr-semver-bump)](https://github.com/jefflinse/pr-semver-bump/tags)
+[![License](https://img.shields.io/github/license/jefflinse/pr-semver-bump)](https://github.com/jefflinse/pr-semver-bump/blob/master/LICENSE)
 
 A GitHub Action to bump and tag a new [semantic version](https://semver.org) when a pull request is merged.
 
@@ -73,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: jefflinse/pr-semver-bump@v1
+      - uses: jefflinse/pr-semver-bump@v1.6.0
         name: Validate Pull Request Metadata
         with:
           mode: validate
@@ -94,7 +95,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: jefflinse/pr-semver-bump@v1
+      - uses: jefflinse/pr-semver-bump@v1.6.0
         name: Bump and Tag Version
         with:
           mode: bump
@@ -111,19 +112,19 @@ The action will fail (in either mode) if any of the following are true:
 
 Inputs can be used to customize the behavior of the action in both modes.
 
-| Name | Description |
-| ---- | ----------- |
-| `mode` | ***Required.*** `validate` or `bump`. |
-| `repo-token` | ***Required.*** The `GITHUB_TOKEN` for the repo. Needed for fetching pull request data and tagging new releases. |
-| `major-label` | The name of the label that indicates the pull request should result in a **major** version bump. _Default: 'major release'_. |
-| `minor-label` | The name of the label that indicates the pull request should result in a **minor** version bump. _Default: 'minor release'_. |
-| `patch-label` | The name of the label that indicates the pull request should result in a **patch** version bump. _Default: 'patch release'_. |
-| `require-release-notes` | Whether or not release notes are required. |
-| `release-notes-prefix` | If defined, constrains release notes to any text appearing after a line matching this pattern in the pull request body. By default, release notes start at the beginning of the pull request description. |
-| `release-notes-suffix` | If defined, constrains release notes to any text appearing before a line matching this pattern in the pull request body. By default, release notes end at the end of the pull request description. |
-| `use-ssh` | If set to `true`, use git commands rather than the github api. Useful if you want to use a deploy key to push the tag in order to trigger further workflows (See https://github.com/pr-mpt/examples-workflow-trigger) |
-| `with-v` | If true, newly tagged versions will be prefixed with 'v', e.g. 'v1.2.3'. |
-| `require-release` | If true (default true), when `mode=bump` the action will fail if a release tag is not found on the merged pull request. |
+| Name                    | Description                                                                                                                                                                                               |
+|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `mode`                  | **_Required._** `validate` or `bump`.                                                                                                                                                                     |
+| `repo-token`            | **_Required._** The `GITHUB_TOKEN` for the repo. Needed for fetching pull request data and tagging new releases.                                                                                          |
+| `major-label`           | The name of the label that indicates the pull request should result in a **major** version bump. _Default: 'major release'_.                                                                              |
+| `minor-label`           | The name of the label that indicates the pull request should result in a **minor** version bump. _Default: 'minor release'_.                                                                              |
+| `patch-label`           | The name of the label that indicates the pull request should result in a **patch** version bump. _Default: 'patch release'_.                                                                              |
+| `noop-labels`           | The list of label names that indicates the pull request should **not** result in a updated version bump. _Default: ''_.                                                                      |
+| `require-release-notes` | Whether or not release notes are required.                                                                                                                                                                |
+| `release-notes-prefix`  | If defined, constrains release notes to any text appearing after a line matching this pattern in the pull request body. By default, release notes start at the beginning of the pull request description. |
+| `release-notes-suffix`  | If defined, constrains release notes to any text appearing before a line matching this pattern in the pull request body. By default, release notes end at the end of the pull request description.        |
+| `with-v`                | If true, newly tagged versions will be prefixed with 'v', e.g. 'v1.2.3'.                                                                                                                                  |
+| `base-branch`           | Whether or not to only consider version tags on the base branch in the pull request.                                                                                                                      |
 
 ### Using Custom Label Names
 
@@ -132,13 +133,15 @@ By default, the action expects pull requests to be [labeled](https://docs.github
 You can specify your own labels instead. For example, if you always use minor releases for features and patch releases for bugs, you might want:
 
 ```yaml
-uses: jefflinse/pr-semver-bump@v1
+uses: jefflinse/pr-semver-bump@v1.6.0
 name: Validate PR Metadata
 with:
   mode: validate
   repo-token: ${{ secrets.GITHUB_TOKEN }}
   minor-label: new-feature
   patch-label: bug-fix
+  noop-labels:
+    - documentation change
 ```
 
 ### Requiring Release Notes
@@ -146,7 +149,7 @@ with:
 Setting `require-release-notes: true` in your workflow configuration will require that some sort of release notes be present. By default, the entire pull request description is used as release notes.
 
 ```yaml
-uses: jefflinse/pr-semver-bump@v1
+uses: jefflinse/pr-semver-bump@v1.6.0
 name: Validate PR Metadata
 with:
   mode: validate
@@ -159,7 +162,7 @@ with:
 By default, the entire pull request description is used as the release notes. If you want to constrain the release notes to just a subset of the description, you can define `release-notes-prefix` and/or `release-notes-suffix` as bounding patterns for the release notes. Lines matching these patterns frame the desired release notes. Any text appearing before the prefix pattern or after the suffix pattern will be ignored.
 
 ```yaml
-uses: jefflinse/pr-semver-bump@v1
+uses: jefflinse/pr-semver-bump@v1.6.0
   name: Validate PR Metadata
   with:
     mode: validate
@@ -199,11 +202,12 @@ and the resulting release notes would contain:
 
 The following outputs are available (in both modes):
 
-| Name | Description |
-| ---- | ----------- |
-| `old-version` | The version before bumping. |
-| `version` | The version after bumping. |
-| `release-notes` | Release notes found in the pull request description. |
+| Name            | Description                                                                     |
+|-----------------|---------------------------------------------------------------------------------|
+| `old-version`   | The version before bumping.                                                     |
+| `version`       | The version after bumping. Not provided when skipped.                           |
+| `release-notes` | Release notes found in the pull request description. Not provided when skipped. |
+| `skipped`       | Indicator set to true if the version bump was skipped.                          |
 
 ## Permissions
 
@@ -232,7 +236,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: jefflinse/pr-semver-bump@v1
+      - uses: jefflinse/pr-semver-bump@v1.6.0
         name: Validate Pull Request Metadata
         with:
           mode: validate
@@ -240,10 +244,13 @@ jobs:
           major-label: major release
           minor-label: minor release
           patch-label: patch release
+          noop-labels:
+            - documentation change
           require-release-notes: true
           release-notes-prefix: ''
           release-notes-suffix: ''
           with-v: false
+          base-branch: false
 ```
 
 Create a CI workflow to run whenever a pull request is merged. All optional inputs are explicitly set to their default values in the configuration below.
@@ -262,7 +269,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: jefflinse/pr-semver-bump@v1
+      - uses: jefflinse/pr-semver-bump@v1.6.0
         name: Bump and Tag Version
         with:
           mode: bump
@@ -270,10 +277,13 @@ jobs:
           major-label: major release
           minor-label: minor release
           patch-label: patch release
+          noop-labels:
+            - documentation change
           require-release-notes: true
           release-notes-prefix: ''
           release-notes-suffix: ''
           with-v: false
+          base-branch: false
 ```
 
 ## Contributing
