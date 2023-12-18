@@ -30,9 +30,6 @@ The following snippet demonstrates its use:
           use-ssh: true
 ```
 
-### Adds `require-release` option
-Defaults to `true` to replicate existing functionalty, but when set to `false`, will not cause a CI failure if no tag is present. In some workflows not every commit requires a release.
-
 # pr-semver-bump
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/jefflinse/pr-semver-bump/master-ci.yml?branch=master)](https://github.com/jefflinse/pr-semver-bump/actions/workflows/master-ci.yml?query=branch%3Amaster)
